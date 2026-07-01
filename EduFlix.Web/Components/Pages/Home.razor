@@ -1,7 +1,17 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>EduFlix</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Elevation="0" Class="pa-8 rounded-lg" Style="text-align:center;">
+        <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Color="Color.Primary" Style="font-size: 4rem;" />
+        <MudText Typo="Typo.h3" Class="mt-4">Welcome to EduFlix</MudText>
+        <MudText Typo="Typo.subtitle1" Class="mt-2 mud-text-secondary">
+            The educational video platform where lecturers share course videos and students watch, learn and rewind.
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                   StartIcon="@Icons.Material.Filled.VideoLibrary" Href="videos" Class="mt-6">
+            Browse videos
+        </MudButton>
+    </MudPaper>
+</MudContainer>
