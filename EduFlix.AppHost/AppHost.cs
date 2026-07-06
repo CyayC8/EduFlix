@@ -8,8 +8,16 @@ var postgres = builder.AddPostgres("postgres")
 
 var database = postgres.AddDatabase("eduflixdb");
 
+// Azure Blob Storage voor de videobestanden. In dev lokaal geemuleerd met Azurite (container).
+var storage = builder.AddAzureStorage("storage")
+    .RunAsEmulator();
+
+var blobs = storage.AddBlobs("blobs");
+
 builder.AddProject<Projects.EduFlix_Web>("web")
     .WithReference(database)
-    .WaitFor(database);
+    .WithReference(blobs)
+    .WaitFor(database)
+    .WaitFor(blobs);
 
 builder.Build().Run();
