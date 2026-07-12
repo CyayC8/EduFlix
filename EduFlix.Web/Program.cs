@@ -65,4 +65,7 @@ app.MapAdditionalIdentityEndpoints();
 
 app.MapDefaultEndpoints();
 
+// Database migreren + rollen en lecturer-account seeden.
+await IdentitySeed.RunAsync(app.Services);
+
 app.Run();
