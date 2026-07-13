@@ -1,4 +1,7 @@
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
     <MudNavLink Href="videos" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VideoLibrary">Videos</MudNavLink>
+    <AuthorizeView Roles="Lecturer">
+        <MudNavLink Href="beheer" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CloudUpload">Beheer</MudNavLink>
+    </AuthorizeView>
 </MudNavMenu>

@@ -1,0 +1,10 @@
+@page "/beheer"
+@attribute [Authorize(Roles = "Lecturer")]
+
+<PageTitle>Beheer - EduFlix</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Beheer</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+    Video-beheer komt eraan.
+</MudAlert>
