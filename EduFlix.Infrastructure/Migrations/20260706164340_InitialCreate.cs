@@ -4,10 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace EduFlix.Web.Data.Migrations
+namespace EduFlix.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentity : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -49,6 +49,19 @@ namespace EduFlix.Web.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -157,6 +170,54 @@ namespace EduFlix.Web.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Videos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    BlobName = table.Column<string>(type: "text", nullable: false),
+                    ContentType = table.Column<string>(type: "text", nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    DurationSeconds = table.Column<int>(type: "integer", nullable: true),
+                    UploadedById = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DownloadCount = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Videos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Videos_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VideoViews",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    VideoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ViewerId = table.Column<string>(type: "text", nullable: false),
+                    ViewedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VideoViews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VideoViews_Videos_VideoId",
+                        column: x => x.VideoId,
+                        principalTable: "Videos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -193,6 +254,32 @@ namespace EduFlix.Web.Data.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Categories_Name",
+                table: "Categories",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Videos_CategoryId",
+                table: "Videos",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Videos_UploadedById",
+                table: "Videos",
+                column: "UploadedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VideoViews_VideoId",
+                table: "VideoViews",
+                column: "VideoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VideoViews_ViewedAt",
+                table: "VideoViews",
+                column: "ViewedAt");
         }
 
         /// <inheritdoc />
@@ -214,10 +301,19 @@ namespace EduFlix.Web.Data.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "VideoViews");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Videos");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
         }
     }
 }

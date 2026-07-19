@@ -5,7 +5,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using EduFlix.Web.Data
+@using EduFlix.Infrastructure
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -88,7 +88,7 @@
         Logger.LogInformation("User created a new account with password.");
 
         // nieuwe accounts zijn standaard studenten
-        await UserManager.AddToRoleAsync(user, EduFlix.Web.Data.IdentitySeed.StudentRole);
+        await UserManager.AddToRoleAsync(user, EduFlix.Infrastructure.IdentitySeed.StudentRole);
 
         var userId = await UserManager.GetUserIdAsync(user);
         var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);

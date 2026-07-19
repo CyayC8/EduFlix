@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace EduFlix.Web.Data;
+namespace EduFlix.Infrastructure;
 
 // Enkel voor 'dotnet ef' (design-time). Geeft een dummy connectie zodat we migraties
 // kunnen aanmaken zonder draaiende database. Op runtime levert Aspire de echte connectie.

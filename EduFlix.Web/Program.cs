@@ -1,6 +1,6 @@
 using EduFlix.Web.Components;
 using EduFlix.Web.Components.Account;
-using EduFlix.Web.Data;
+using EduFlix.Infrastructure;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using MudBlazor.Services;

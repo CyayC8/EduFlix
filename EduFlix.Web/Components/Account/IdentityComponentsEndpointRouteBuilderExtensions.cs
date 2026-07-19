@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using EduFlix.Web.Components.Account.Pages;
 using EduFlix.Web.Components.Account.Pages.Manage;
-using EduFlix.Web.Data;
+using EduFlix.Infrastructure;
 
 namespace Microsoft.AspNetCore.Routing;
 

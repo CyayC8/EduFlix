@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using EduFlix.Web.Data;
+using EduFlix.Infrastructure;
 
 namespace EduFlix.Web.Components.Account;
 

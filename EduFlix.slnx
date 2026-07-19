@@ -1,5 +1,8 @@
 <Solution>
   <Project Path="EduFlix.AppHost/EduFlix.AppHost.csproj" />
+  <Project Path="EduFlix.Application/EduFlix.Application.csproj" />
+  <Project Path="EduFlix.Domain/EduFlix.Domain.csproj" />
+  <Project Path="EduFlix.Infrastructure/EduFlix.Infrastructure.csproj" />
   <Project Path="EduFlix.ServiceDefaults/EduFlix.ServiceDefaults.csproj" />
   <Project Path="EduFlix.Web/EduFlix.Web.csproj" />
 </Solution>

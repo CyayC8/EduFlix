@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace EduFlix.Web.Data;
+namespace EduFlix.Infrastructure;
 
 // Migreert de database en zorgt dat de rollen + een lecturer-account bestaan.
 public static class IdentitySeed
