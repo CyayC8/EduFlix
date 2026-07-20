@@ -14,10 +14,17 @@ var storage = builder.AddAzureStorage("storage")
 
 var blobs = storage.AddBlobs("blobs");
 
+// Migreert de database en seedt rollen/lecturer-account. Draait 1x en stopt dan zichzelf;
+// 'web' wacht tot dit volledig klaar is voor die zelf opstart.
+var migrations = builder.AddProject<Projects.EduFlix_MigrationService>("migrations")
+    .WithReference(database)
+    .WaitFor(database);
+
 builder.AddProject<Projects.EduFlix_Web>("web")
     .WithReference(database)
     .WithReference(blobs)
     .WaitFor(database)
-    .WaitFor(blobs);
+    .WaitFor(blobs)
+    .WaitForCompletion(migrations);
 
 builder.Build().Run();

@@ -65,7 +65,6 @@ app.MapAdditionalIdentityEndpoints();
 
 app.MapDefaultEndpoints();
 
-// Database migreren + rollen en lecturer-account seeden.
-await IdentitySeed.RunAsync(app.Services);
+// Migreren + seeden gebeurt in EduFlix.MigrationService, web wacht daarop (zie AppHost).
 
 app.Run();

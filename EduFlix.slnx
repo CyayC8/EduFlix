@@ -3,6 +3,7 @@
   <Project Path="EduFlix.Application/EduFlix.Application.csproj" />
   <Project Path="EduFlix.Domain/EduFlix.Domain.csproj" />
   <Project Path="EduFlix.Infrastructure/EduFlix.Infrastructure.csproj" />
+  <Project Path="EduFlix.MigrationService/EduFlix.MigrationService.csproj" />
   <Project Path="EduFlix.ServiceDefaults/EduFlix.ServiceDefaults.csproj" />
   <Project Path="EduFlix.Web/EduFlix.Web.csproj" />
 </Solution>

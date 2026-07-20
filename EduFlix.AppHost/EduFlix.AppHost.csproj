@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EduFlix.Web\EduFlix.Web.csproj" />
+    <ProjectReference Include="..\EduFlix.MigrationService\EduFlix.MigrationService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
