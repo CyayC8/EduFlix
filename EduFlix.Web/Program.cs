@@ -3,6 +3,7 @@ using EduFlix.Web.Components.Account;
 using EduFlix.Infrastructure;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,17 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// grotere berichten toelaten op het circuit, nodig om videobestanden te kunnen uploaden
+builder.Services.Configure<HubOptions>(options =>
+{
+    options.MaximumReceiveMessageSize = 512 * 1024 * 1024;
+});
+
 builder.Services.AddMudServices();
+
+// Blob storage voor de videobestanden (Azurite in dev).
+builder.AddAzureBlobServiceClient("blobs");
+builder.Services.AddInfrastructureServices();
 
 // Identity: cascading auth state + de account-services.
 builder.Services.AddCascadingAuthenticationState();
