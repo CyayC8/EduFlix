@@ -1,4 +1,5 @@
 using EduFlix.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EduFlix.MigrationService;
 
@@ -16,6 +17,10 @@ public class MigrationWorker(IServiceProvider services, IHostApplicationLifetime
         try
         {
             await IdentitySeed.RunAsync(services);
+
+            using var scope = services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await CategorySeed.RunAsync(db);
         }
         catch (Exception ex)
         {
