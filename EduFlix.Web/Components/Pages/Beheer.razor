@@ -1,10 +1,124 @@
 @page "/beheer"
 @attribute [Authorize(Roles = "Lecturer")]
+@using System.Security.Claims
+@using EduFlix.Application
+@using EduFlix.Domain
+@inject IVideoService VideoService
+@inject ISnackbar Snackbar
 
 <PageTitle>Beheer - EduFlix</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Beheer</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Video uploaden</MudText>
 
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-    Video-beheer komt eraan.
-</MudAlert>
+<MudPaper Class="pa-6" Style="max-width:600px">
+    <MudTextField @bind-Value="_title" Label="Titel" Required="true" Class="mb-3" />
+    <MudTextField @bind-Value="_description" Label="Omschrijving" Lines="3" Class="mb-3" />
+    <MudSelect T="int?" @bind-Value="_categoryId" Label="Categorie" Class="mb-3">
+        @foreach (var category in _categories)
+        {
+            <MudSelectItem T="int?" Value="@((int?)category.Id)">@category.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <InputFile OnChange="OnFileSelected" accept=".mp4,video/mp4" class="mb-3" />
+    @if (_selectedFile is not null)
+    {
+        <MudText Typo="Typo.body2" Class="mb-3">
+            @_selectedFile.Name (@((_selectedFile.Size / 1024.0 / 1024.0).ToString("F1")) MB)
+        </MudText>
+    }
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3">@_error</MudAlert>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Upload"
+               Disabled="@(_uploading || _selectedFile is null || string.IsNullOrWhiteSpace(_title))">
+        @(_uploading ? "Bezig met uploaden..." : "Uploaden")
+    </MudButton>
+</MudPaper>
+
+@code {
+    // demo-schaal: mp4 volstaat, 500 MB is ruim genoeg voor een cursusvideo
+    private const long MaxFileSize = 500L * 1024 * 1024;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private string _title = "";
+    private string? _description;
+    private int? _categoryId;
+    private IBrowserFile? _selectedFile;
+    private string? _error;
+    private bool _uploading;
+    private string? _userId;
+    private IReadOnlyList<Category> _categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await VideoService.GetCategoriesAsync();
+
+        if (AuthenticationStateTask is not null)
+        {
+            var state = await AuthenticationStateTask;
+            _userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        var file = e.File;
+
+        if (!file.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = "Enkel MP4-bestanden zijn toegelaten.";
+            _selectedFile = null;
+            return;
+        }
+        if (file.Size > MaxFileSize)
+        {
+            _error = "Bestand is te groot (max 500 MB).";
+            _selectedFile = null;
+            return;
+        }
+
+        _selectedFile = file;
+    }
+
+    private async Task Upload()
+    {
+        if (_selectedFile is null || _userId is null) return;
+
+        _uploading = true;
+        _error = null;
+        try
+        {
+            await using var stream = _selectedFile.OpenReadStream(MaxFileSize);
+            await VideoService.UploadAsync(new VideoUploadRequest(
+                Title: _title,
+                Description: _description,
+                CategoryId: _categoryId,
+                FileName: _selectedFile.Name,
+                ContentType: "video/mp4",
+                SizeBytes: _selectedFile.Size,
+                Content: stream,
+                UploadedById: _userId));
+
+            Snackbar.Add("Video geüpload.", Severity.Success);
+            _title = "";
+            _description = null;
+            _categoryId = null;
+            _selectedFile = null;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Upload mislukt: {ex.Message}";
+        }
+        finally
+        {
+            _uploading = false;
+        }
+    }
+}
