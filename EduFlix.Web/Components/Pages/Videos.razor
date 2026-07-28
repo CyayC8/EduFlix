@@ -1,10 +1,53 @@
 @page "/videos"
 @attribute [Authorize]
+@using EduFlix.Application
+@using EduFlix.Domain
+@inject IVideoService VideoService
 
 <PageTitle>Videos - EduFlix</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Videos</MudText>
 
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-    The video catalog is coming soon.
-</MudAlert>
+@if (_videos.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Nog geen video's beschikbaar.
+    </MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var video in _videos)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@video.Title</MudText>
+                        @if (video.Category is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="mt-1">@video.Category.Name</MudChip>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(video.Description))
+                        {
+                            <MudText Typo="Typo.body2" Class="mt-2">@video.Description</MudText>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Href="@($"videos/{video.Id}")">
+                            Bekijken
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private IReadOnlyList<Video> _videos = [];
+
+    protected override async Task OnInitializedAsync()
+        => _videos = await VideoService.GetAllAsync();
+}
