@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IBlobStorage, BlobStorage>();
         services.AddScoped<IVideoService, VideoService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
         return services;
     }
 }
