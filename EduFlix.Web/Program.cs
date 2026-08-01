@@ -1,3 +1,4 @@
+using EduFlix.Application;
 using EduFlix.Web.Components;
 using EduFlix.Web.Components.Account;
 using EduFlix.Infrastructure;
@@ -63,7 +64,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    // lokaal is de http-poort prima om tegen te testen; in productie wel altijd https
+    app.UseHttpsRedirection();
+}
 
 app.UseAntiforgery();
 
@@ -73,6 +78,18 @@ app.MapRazorComponents<App>()
 
 // Endpoints voor de Identity /Account Razor-componenten.
 app.MapAdditionalIdentityEndpoints();
+
+// Downloaden gaat via een gewone HTTP-endpoint (streaming), niet via een Blazor-component.
+app.MapGet("/videos/{id:guid}/download", async (Guid id, IVideoService videoService, IBlobStorage blobs) =>
+{
+    var video = await videoService.GetByIdAsync(id);
+    if (video is null) return Results.NotFound();
+
+    await videoService.IncrementDownloadCountAsync(id);
+    var stream = await blobs.OpenReadAsync(video.BlobName);
+    var extension = Path.GetExtension(video.BlobName);
+    return Results.File(stream, video.ContentType, $"{video.Title}{extension}");
+}).RequireAuthorization();
 
 app.MapDefaultEndpoints();
 

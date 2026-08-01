@@ -1,0 +1,71 @@
+@page "/videos/{Id:guid}"
+@attribute [Authorize]
+@using System.Security.Claims
+@using EduFlix.Application
+@using EduFlix.Domain
+@inject IVideoService VideoService
+@inject IBlobStorage BlobStorage
+@inject IAnalyticsService Analytics
+
+<PageTitle>@(_video?.Title ?? "Video") - EduFlix</PageTitle>
+
+@if (_video is null)
+{
+    <MudAlert Severity="Severity.Warning">Video niet gevonden.</MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h4" Class="mb-2">@_video.Title</MudText>
+    @if (_video.Category is not null)
+    {
+        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="mb-3">@_video.Category.Name</MudChip>
+    }
+
+    <video controls width="100%" style="max-width:900px;border-radius:10px;background:#000" src="@_videoUrl"></video>
+
+    @if (!string.IsNullOrWhiteSpace(_video.Description))
+    {
+        <MudText Typo="Typo.body1" Class="mt-4">@_video.Description</MudText>
+    }
+
+    <MudText Typo="Typo.caption" Class="mt-2 d-block">@_viewCount keer bekeken</MudText>
+
+    <MudButton Class="mt-3" Variant="Variant.Outlined" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Download"
+               Href="@($"videos/{Id}/download")">
+        Downloaden
+    </MudButton>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private Video? _video;
+    private string? _videoUrl;
+    private int _viewCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _video = await VideoService.GetByIdAsync(Id);
+        if (_video is null) return;
+
+        _videoUrl = BlobStorage.GetReadSasUri(_video.BlobName, TimeSpan.FromHours(2)).ToString();
+
+        var userId = await GetUserIdAsync();
+        if (userId is not null)
+        {
+            await Analytics.LogViewAsync(Id, userId);
+        }
+        _viewCount = await Analytics.GetViewCountAsync(Id);
+    }
+
+    private async Task<string?> GetUserIdAsync()
+    {
+        if (AuthenticationStateTask is null) return null;
+        var state = await AuthenticationStateTask;
+        return state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+}

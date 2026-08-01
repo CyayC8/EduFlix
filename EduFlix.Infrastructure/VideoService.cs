@@ -60,4 +60,13 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
 
     public async Task<IReadOnlyList<Category>> GetCategoriesAsync(CancellationToken ct = default)
         => await db.Categories.OrderBy(c => c.Name).ToListAsync(ct);
+
+    public async Task IncrementDownloadCountAsync(Guid id, CancellationToken ct = default)
+    {
+        var video = await db.Videos.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (video is null) return;
+
+        video.DownloadCount++;
+        await db.SaveChangesAsync(ct);
+    }
 }
