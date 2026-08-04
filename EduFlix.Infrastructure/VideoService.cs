@@ -9,6 +9,12 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
     public async Task<IReadOnlyList<Video>> GetAllAsync(CancellationToken ct = default)
         => await db.Videos.Include(v => v.Category).OrderByDescending(v => v.CreatedAt).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Video>> GetByUploaderAsync(string uploaderId, CancellationToken ct = default)
+        => await db.Videos.Include(v => v.Category)
+            .Where(v => v.UploadedById == uploaderId)
+            .OrderByDescending(v => v.CreatedAt)
+            .ToListAsync(ct);
+
     public async Task<Video?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await db.Videos.Include(v => v.Category).FirstOrDefaultAsync(v => v.Id == id, ct);
 

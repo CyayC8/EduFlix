@@ -6,6 +6,7 @@ namespace EduFlix.Application;
 public interface IVideoService
 {
     Task<IReadOnlyList<Video>> GetAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Video>> GetByUploaderAsync(string uploaderId, CancellationToken ct = default);
     Task<Video?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<Video> UploadAsync(VideoUploadRequest request, CancellationToken ct = default);
     Task UpdateAsync(Guid id, string title, string? description, int? categoryId, CancellationToken ct = default);
