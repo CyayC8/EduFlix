@@ -1,0 +1,50 @@
+@using EduFlix.Application
+@using EduFlix.Domain
+@inject IVideoService VideoService
+
+<MudDialog>
+    <TitleContent>Video bewerken</TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_title" Label="Titel" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_description" Label="Omschrijving" Lines="3" Class="mb-3" />
+        <MudSelect T="int?" @bind-Value="_categoryId" Label="Categorie">
+            @foreach (var category in _categories)
+            {
+                <MudSelectItem T="int?" Value="@((int?)category.Id)">@category.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Annuleren</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save"
+                   Disabled="@string.IsNullOrWhiteSpace(_title)">
+            Opslaan
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Video Video { get; set; } = null!;
+
+    private string _title = "";
+    private string? _description;
+    private int? _categoryId;
+    private IReadOnlyList<Category> _categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _title = Video.Title;
+        _description = Video.Description;
+        _categoryId = Video.CategoryId;
+        _categories = await VideoService.GetCategoriesAsync();
+    }
+
+    private async Task Save()
+    {
+        await VideoService.UpdateAsync(Video.Id, _title, _description, _categoryId);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

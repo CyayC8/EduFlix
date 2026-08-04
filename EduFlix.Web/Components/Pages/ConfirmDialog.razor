@@ -1,0 +1,18 @@
+<MudDialog>
+    <TitleContent>@Title</TitleContent>
+    <DialogContent>@Message</DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Annuleren</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Confirm">@ConfirmText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string Title { get; set; } = "Bevestigen";
+    [Parameter] public string Message { get; set; } = "Weet je het zeker?";
+    [Parameter] public string ConfirmText { get; set; } = "Bevestigen";
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+}
