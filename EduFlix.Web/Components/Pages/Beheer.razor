@@ -5,6 +5,7 @@
 @using EduFlix.Domain
 @inject IVideoService VideoService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Beheer - EduFlix</PageTitle>
 
@@ -39,6 +40,35 @@
     </MudButton>
 </MudPaper>
 
+<MudText Typo="Typo.h4" Class="mt-8 mb-4">Mijn video's</MudText>
+
+@if (_myVideos.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Je hebt nog geen video's geüpload.
+    </MudAlert>
+}
+else
+{
+    <MudTable Items="_myVideos" Hover="true">
+        <HeaderContent>
+            <MudTh>Titel</MudTh>
+            <MudTh>Categorie</MudTh>
+            <MudTh>Downloads</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Titel">@context.Title</MudTd>
+            <MudTd DataLabel="Categorie">@(context.Category?.Name ?? "-")</MudTd>
+            <MudTd DataLabel="Downloads">@context.DownloadCount</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditVideo(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteVideo(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
 @code {
     // demo-schaal: mp4 volstaat, 500 MB is ruim genoeg voor een cursusvideo
     private const long MaxFileSize = 500L * 1024 * 1024;
@@ -54,6 +84,7 @@
     private bool _uploading;
     private string? _userId;
     private IReadOnlyList<Category> _categories = [];
+    private IReadOnlyList<Video> _myVideos = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,6 +95,14 @@
             var state = await AuthenticationStateTask;
             _userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
+
+        await LoadMyVideos();
+    }
+
+    private async Task LoadMyVideos()
+    {
+        if (_userId is null) return;
+        _myVideos = await VideoService.GetByUploaderAsync(_userId);
     }
 
     private void OnFileSelected(InputFileChangeEventArgs e)
@@ -111,6 +150,7 @@
             _description = null;
             _categoryId = null;
             _selectedFile = null;
+            await LoadMyVideos();
         }
         catch (Exception ex)
         {
@@ -120,5 +160,36 @@
         {
             _uploading = false;
         }
+    }
+
+    private async Task EditVideo(Video video)
+    {
+        var parameters = new DialogParameters<EditVideoDialog> { { x => x.Video, video } };
+        var dialog = await DialogService.ShowAsync<EditVideoDialog>("Video bewerken", parameters);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            Snackbar.Add("Video bijgewerkt.", Severity.Success);
+            await LoadMyVideos();
+        }
+    }
+
+    private async Task DeleteVideo(Video video)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.Title, "Video verwijderen" },
+            { x => x.Message, $"Weet je zeker dat je '{video.Title}' wil verwijderen? Dit kan niet ongedaan gemaakt worden." },
+            { x => x.ConfirmText, "Verwijderen" },
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Video verwijderen", parameters);
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled) return;
+
+        await VideoService.DeleteAsync(video.Id);
+        Snackbar.Add("Video verwijderd.", Severity.Success);
+        await LoadMyVideos();
     }
 }
