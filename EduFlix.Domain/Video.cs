@@ -11,6 +11,7 @@ public class Video
     public string ContentType { get; set; } = string.Empty;
     public long SizeBytes { get; set; }
     public int? DurationSeconds { get; set; }
+    public string? ThumbnailBlobName { get; set; }
 
     // Wie uploadde: het Identity user-id (geen navigatie naar Identity, zo blijft Domain zuiver)
     public string UploadedById { get; set; } = string.Empty;
