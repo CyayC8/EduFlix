@@ -23,4 +23,6 @@ public record VideoUploadRequest(
     string ContentType,
     long SizeBytes,
     Stream Content,
-    string UploadedById);
+    string UploadedById,
+    int? DurationSeconds = null,
+    byte[]? ThumbnailBytes = null);

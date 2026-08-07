@@ -26,6 +26,14 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
 
         await blobs.UploadAsync(blobName, request.Content, request.ContentType, ct);
 
+        string? thumbnailBlobName = null;
+        if (request.ThumbnailBytes is { Length: > 0 })
+        {
+            thumbnailBlobName = $"{id}-thumb.jpg";
+            using var thumbnailStream = new MemoryStream(request.ThumbnailBytes);
+            await blobs.UploadAsync(thumbnailBlobName, thumbnailStream, "image/jpeg", ct);
+        }
+
         var video = new Video
         {
             Id = id,
@@ -36,6 +44,8 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
             ContentType = request.ContentType,
             SizeBytes = request.SizeBytes,
             UploadedById = request.UploadedById,
+            DurationSeconds = request.DurationSeconds,
+            ThumbnailBlobName = thumbnailBlobName,
         };
 
         db.Videos.Add(video);
@@ -60,6 +70,10 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
         if (video is null) return;
 
         await blobs.DeleteAsync(video.BlobName, ct);
+        if (video.ThumbnailBlobName is not null)
+        {
+            await blobs.DeleteAsync(video.ThumbnailBlobName, ct);
+        }
         db.Videos.Remove(video);
         await db.SaveChangesAsync(ct);
     }
