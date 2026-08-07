@@ -6,6 +6,7 @@
 @inject IVideoService VideoService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <PageTitle>Beheer - EduFlix</PageTitle>
 
@@ -21,12 +22,20 @@
         }
     </MudSelect>
 
-    <InputFile OnChange="OnFileSelected" accept=".mp4,video/mp4" class="mb-3" />
+    <InputFile id="video-file-input" OnChange="OnFileSelected" accept=".mp4,video/mp4" class="mb-3" />
     @if (_selectedFile is not null)
     {
         <MudText Typo="Typo.body2" Class="mb-3">
             @_selectedFile.Name (@((_selectedFile.Size / 1024.0 / 1024.0).ToString("F1")) MB)
+            @if (_durationSeconds is not null)
+            {
+                <text> — @FormatDuration(_durationSeconds.Value)</text>
+            }
         </MudText>
+        @if (_thumbnailDataUrl is not null)
+        {
+            <MudImage Src="@_thumbnailDataUrl" Width="200" Class="mb-3 rounded" />
+        }
     }
 
     @if (_error is not null)
@@ -85,6 +94,9 @@ else
     private string? _userId;
     private IReadOnlyList<Category> _categories = [];
     private IReadOnlyList<Video> _myVideos = [];
+    private int? _durationSeconds;
+    private byte[]? _thumbnailBytes;
+    private string? _thumbnailDataUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,9 +117,12 @@ else
         _myVideos = await VideoService.GetByUploaderAsync(_userId);
     }
 
-    private void OnFileSelected(InputFileChangeEventArgs e)
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _error = null;
+        _durationSeconds = null;
+        _thumbnailBytes = null;
+        _thumbnailDataUrl = null;
         var file = e.File;
 
         if (!file.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
@@ -124,7 +139,25 @@ else
         }
 
         _selectedFile = file;
+
+        // duur + thumbnail worden client-side (in de browser) uit het bestand gehaald,
+        // geen server-verwerking nodig
+        try
+        {
+            var capture = await JS.InvokeAsync<VideoCaptureResult>("eduflixVideoCapture.capture", "video-file-input");
+            _durationSeconds = capture.DurationSeconds;
+            _thumbnailBytes = Convert.FromBase64String(capture.ThumbnailBase64);
+            _thumbnailDataUrl = $"data:image/jpeg;base64,{capture.ThumbnailBase64}";
+        }
+        catch
+        {
+            // geen blokkerend probleem: upload werkt ook zonder thumbnail/duur
+        }
     }
+
+    private record VideoCaptureResult(int DurationSeconds, string ThumbnailBase64);
+
+    private static string FormatDuration(int seconds) => TimeSpan.FromSeconds(seconds).ToString(@"mm\:ss");
 
     private async Task Upload()
     {
@@ -143,13 +176,18 @@ else
                 ContentType: "video/mp4",
                 SizeBytes: _selectedFile.Size,
                 Content: stream,
-                UploadedById: _userId));
+                UploadedById: _userId,
+                DurationSeconds: _durationSeconds,
+                ThumbnailBytes: _thumbnailBytes));
 
             Snackbar.Add("Video geüpload.", Severity.Success);
             _title = "";
             _description = null;
             _categoryId = null;
             _selectedFile = null;
+            _durationSeconds = null;
+            _thumbnailBytes = null;
+            _thumbnailDataUrl = null;
             await LoadMyVideos();
         }
         catch (Exception ex)
