@@ -5,7 +5,7 @@ namespace EduFlix.Infrastructure;
 
 public static class CategorySeed
 {
-    private static readonly string[] Defaults = ["Algemeen", "Programmeren", "Wiskunde", "Talen"];
+    private static readonly string[] Defaults = ["Algemeen", "Programmeren", "Wiskunde", "Talen", "Geschiedenis", "Fysica", "Chemie", "Biologie", "Aardrijkskunde", "Economie", "Kunst", "Muziek", "Sport", "Gezondheid"];
 
     public static async Task RunAsync(ApplicationDbContext db)
     {
