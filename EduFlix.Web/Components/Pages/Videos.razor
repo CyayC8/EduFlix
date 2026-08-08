@@ -3,6 +3,7 @@
 @using EduFlix.Application
 @using EduFlix.Domain
 @inject IVideoService VideoService
+@inject IBlobStorage BlobStorage
 
 <PageTitle>Videos - EduFlix</PageTitle>
 
@@ -21,6 +22,25 @@ else
         {
             <MudItem xs="12" sm="6" md="4">
                 <MudCard>
+                    <div style="position:relative">
+                        @if (video.ThumbnailBlobName is not null)
+                        {
+                            <MudCardMedia Image="@BlobStorage.GetReadSasUri(video.ThumbnailBlobName, TimeSpan.FromHours(2)).ToString()" Height="160" />
+                        }
+                        else
+                        {
+                            <div style="height:160px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05)">
+                                <MudIcon Icon="@Icons.Material.Filled.Movie" Size="Size.Large" Color="Color.Default" />
+                            </div>
+                        }
+                        @if (video.DurationSeconds is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Class="ma-2"
+                                     Style="position:absolute;bottom:0;right:0;background:rgba(0,0,0,0.7);color:white">
+                                @FormatDuration(video.DurationSeconds.Value)
+                            </MudChip>
+                        }
+                    </div>
                     <MudCardContent>
                         <MudText Typo="Typo.h6">@video.Title</MudText>
                         @if (video.Category is not null)
@@ -50,4 +70,6 @@ else
 
     protected override async Task OnInitializedAsync()
         => _videos = await VideoService.GetAllAsync();
+
+    private static string FormatDuration(int seconds) => TimeSpan.FromSeconds(seconds).ToString(@"mm\:ss");
 }
