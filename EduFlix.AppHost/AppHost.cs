@@ -2,15 +2,19 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // PostgreSQL draait als container. WithDataVolume houdt de data bij tussen restarts,
 // en pgAdmin geeft een web-ui om de database te bekijken tijdens het ontwikkelen.
-var postgres = builder.AddPostgres("postgres")
+
+var username = builder.AddParameter("postgres-user", secret: true);
+var password = builder.AddParameter("postgres", secret: true);
+var postgres = builder.AddPostgres("postgres2", username, password)
     .WithDataVolume()
     .WithPgAdmin();
 
 var database = postgres.AddDatabase("eduflixdb");
 
 // Azure Blob Storage voor de videobestanden. In dev lokaal geemuleerd met Azurite (container).
+// WithDataVolume zorgt dat geuploade bestanden een herstart overleven (zelfde patroon als bij postgres).
 var storage = builder.AddAzureStorage("storage")
-    .RunAsEmulator();
+    .RunAsEmulator(azurite => azurite.WithDataVolume());
 
 var blobs = storage.AddBlobs("blobs");
 
