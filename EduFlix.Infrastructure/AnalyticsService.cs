@@ -14,4 +14,11 @@ public class AnalyticsService(ApplicationDbContext db) : IAnalyticsService
 
     public async Task<int> GetViewCountAsync(Guid videoId, CancellationToken ct = default)
         => await db.VideoViews.CountAsync(v => v.VideoId == videoId, ct);
+
+    public async Task<IReadOnlyDictionary<Guid, int>> GetViewCountsAsync(IEnumerable<Guid> videoIds, CancellationToken ct = default)
+        => await db.VideoViews
+            .Where(v => videoIds.Contains(v.VideoId))
+            .GroupBy(v => v.VideoId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
 }
