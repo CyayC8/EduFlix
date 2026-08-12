@@ -1,0 +1,50 @@
+@page "/beheer/analytics"
+@attribute [Authorize(Roles = "Lecturer")]
+@using System.Security.Claims
+@using EduFlix.Application
+@inject IVideoService VideoService
+@inject IAnalyticsService AnalyticsService
+
+<PageTitle>Analytics - EduFlix</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Analytics</MudText>
+
+@if (_labels.Length == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        Je hebt nog geen video's om statistieken over te tonen.
+    </MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h6" Class="mb-2">Views per video</MudText>
+    <MudChart ChartType="ChartType.Bar" ChartSeries="@_viewSeries" XAxisLabels="@_labels" Width="100%" Height="300px" />
+
+    <MudText Typo="Typo.h6" Class="mt-8 mb-2">Downloads per video</MudText>
+    <MudChart ChartType="ChartType.Bar" ChartSeries="@_downloadSeries" XAxisLabels="@_labels" Width="100%" Height="300px" />
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private string[] _labels = [];
+    private List<ChartSeries<double>> _viewSeries = [];
+    private List<ChartSeries<double>> _downloadSeries = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = AuthenticationStateTask is null ? null
+            : (await AuthenticationStateTask).User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null) return;
+
+        var videos = await VideoService.GetByUploaderAsync(userId);
+        if (videos.Count == 0) return;
+
+        var viewCounts = await AnalyticsService.GetViewCountsAsync(videos.Select(v => v.Id));
+
+        _labels = videos.Select(v => v.Title).ToArray();
+        _viewSeries = [new ChartSeries<double> { Name = "Views", Data = videos.Select(v => (double)viewCounts.GetValueOrDefault(v.Id)).ToArray() }];
+        _downloadSeries = [new ChartSeries<double> { Name = "Downloads", Data = videos.Select(v => (double)v.DownloadCount).ToArray() }];
+    }
+}
