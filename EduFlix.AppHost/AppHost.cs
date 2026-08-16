@@ -3,9 +3,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 // PostgreSQL draait als container. WithDataVolume houdt de data bij tussen restarts,
 // en pgAdmin geeft een web-ui om de database te bekijken tijdens het ontwikkelen.
 
-var username = builder.AddParameter("postgres-user", secret: true);
-var password = builder.AddParameter("postgres", secret: true);
-var postgres = builder.AddPostgres("postgres2", username, password)
+// Aspire genereert en beheert zelf een veilig wachtwoord (zichtbaar in de dashboard),
+// geen handmatige user-secrets nodig.
+var postgres = builder.AddPostgres("postgres2")
     .WithDataVolume()
     .WithPgAdmin();
 
