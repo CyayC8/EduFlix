@@ -6,6 +6,11 @@
 # editor/tooling config
 .claude/
 
+# lokale Azurite-state (per ongeluk buiten Docker gestart)
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
+
 # dotenv files
 .env
 
