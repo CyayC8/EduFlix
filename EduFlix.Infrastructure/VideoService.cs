@@ -20,8 +20,17 @@ public class VideoService(ApplicationDbContext db, IBlobStorage blobs) : IVideoS
 
     public async Task<Video> UploadAsync(VideoUploadRequest request, CancellationToken ct = default)
     {
-        var id = Guid.NewGuid();
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new InvalidOperationException("Titel is verplicht.");
+
         var extension = Path.GetExtension(request.FileName);
+        if (!extension.Equals(VideoUploadLimits.AllowedExtension, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Enkel MP4-bestanden zijn toegelaten.");
+
+        if (request.SizeBytes > VideoUploadLimits.MaxFileSizeBytes)
+            throw new InvalidOperationException("Bestand is te groot (max 500 MB).");
+
+        var id = Guid.NewGuid();
         var blobName = $"{id}{extension}";
 
         await blobs.UploadAsync(blobName, request.Content, request.ContentType, ct);

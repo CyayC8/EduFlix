@@ -79,9 +79,6 @@ else
 }
 
 @code {
-    // demo-schaal: mp4 volstaat, 500 MB is ruim genoeg voor een cursusvideo
-    private const long MaxFileSize = 500L * 1024 * 1024;
-
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
@@ -131,7 +128,7 @@ else
             _selectedFile = null;
             return;
         }
-        if (file.Size > MaxFileSize)
+        if (file.Size > VideoUploadLimits.MaxFileSizeBytes)
         {
             _error = "Bestand is te groot (max 500 MB).";
             _selectedFile = null;
@@ -167,7 +164,7 @@ else
         _error = null;
         try
         {
-            await using var stream = _selectedFile.OpenReadStream(MaxFileSize);
+            await using var stream = _selectedFile.OpenReadStream(VideoUploadLimits.MaxFileSizeBytes);
             await VideoService.UploadAsync(new VideoUploadRequest(
                 Title: _title,
                 Description: _description,

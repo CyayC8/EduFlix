@@ -26,3 +26,11 @@ public record VideoUploadRequest(
     string UploadedById,
     int? DurationSeconds = null,
     byte[]? ThumbnailBytes = null);
+
+// Regels waar elke upload aan moet voldoen, ook als iemand ooit rechtstreeks
+// IVideoService.UploadAsync aanroept zonder via de Beheer-pagina te gaan.
+public static class VideoUploadLimits
+{
+    public const long MaxFileSizeBytes = 500L * 1024 * 1024;
+    public const string AllowedExtension = ".mp4";
+}
