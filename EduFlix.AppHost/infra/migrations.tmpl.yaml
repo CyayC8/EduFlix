@@ -1,0 +1,52 @@
+api-version: 2024-02-02-preview
+location: {{ .Env.AZURE_LOCATION }}
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    ? "{{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}"
+    : {}
+properties:
+  environmentId: {{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_ID }}
+  configuration:
+    activeRevisionsMode: single
+    runtime:
+      dotnet:
+        autoConfigureDataProtection: true
+    registries:
+      - server: {{ .Env.AZURE_CONTAINER_REGISTRY_ENDPOINT }}
+        identity: {{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}
+    secrets:
+      - name: connectionstrings--eduflixdb
+        value: Host=postgres2;Port=5432;Username=postgres;Password={{ securedParameter "postgres2_password" }};Database=eduflixdb
+      - name: eduflixdb-password
+        value: '{{ securedParameter "postgres2_password" }}'
+  template:
+    containers:
+      - image: {{ .Image }}
+        name: migrations
+        env:
+          - name: AZURE_CLIENT_ID
+            value: {{ .Env.MANAGED_IDENTITY_CLIENT_ID }}
+          - name: EDUFLIXDB_DATABASENAME
+            value: eduflixdb
+          - name: EDUFLIXDB_HOST
+            value: postgres2
+          - name: EDUFLIXDB_JDBCCONNECTIONSTRING
+            value: jdbc:postgresql://postgres2:5432/eduflixdb
+          - name: EDUFLIXDB_PORT
+            value: "5432"
+          - name: EDUFLIXDB_URI
+            value: postgresql://postgres:{{ uriEncode (securedParameter "postgres2_password" )}}@postgres2:5432/eduflixdb
+          - name: EDUFLIXDB_USERNAME
+            value: postgres
+          - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY
+            value: in_memory
+          - name: ConnectionStrings__eduflixdb
+            secretRef: connectionstrings--eduflixdb
+          - name: EDUFLIXDB_PASSWORD
+            secretRef: eduflixdb-password
+    scale:
+      minReplicas: 1
+tags:
+  azd-service-name: migrations
+  aspire-resource-name: migrations
