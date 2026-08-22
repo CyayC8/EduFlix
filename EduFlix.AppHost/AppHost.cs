@@ -5,9 +5,14 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Aspire genereert en beheert zelf een veilig wachtwoord (zichtbaar in de dashboard),
 // geen handmatige user-secrets nodig.
-var postgres = builder.AddPostgres("postgres2")
-    .WithDataVolume()
-    .WithPgAdmin();
+var postgres = builder.AddPostgres("postgres2");
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    // enkel lokaal persisteren: Azure Files (waar dit bij publish op zou mappen)
+    // ondersteunt de bestandsrechten niet die Postgres' initdb nodig heeft, dus crasht de container in de cloud
+    postgres = postgres.WithDataVolume();
+}
+postgres = postgres.WithPgAdmin();
 
 var database = postgres.AddDatabase("eduflixdb");
 
@@ -29,6 +34,7 @@ builder.AddProject<Projects.EduFlix_Web>("web")
     .WithReference(blobs)
     .WaitFor(database)
     .WaitFor(blobs)
-    .WaitForCompletion(migrations);
+    .WaitForCompletion(migrations)
+    .WithExternalHttpEndpoints();
 
 builder.Build().Run();
