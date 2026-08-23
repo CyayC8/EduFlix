@@ -6,6 +6,8 @@ namespace EduFlix.Infrastructure;
 
 // Azure Blob Storage (lokaal geëmuleerd via Azurite). Alle video-bestanden staan
 // in de container "videos"; de BlobServiceClient komt van Aspire (AddAzureBlobClient in Web).
+// SAS-urls worden ondertekend met een shared key (lokaal) of een user delegation key via
+// Azure AD (cloud, waar de client via Managed Identity verbindt, zonder shared key).
 public class BlobStorage(BlobServiceClient client) : IBlobStorage
 {
     private const string ContainerName = "videos";
@@ -35,25 +37,34 @@ public class BlobStorage(BlobServiceClient client) : IBlobStorage
         await blob.DeleteIfExistsAsync(cancellationToken: ct);
     }
 
-    public Uri GetReadSasUri(string blobName, TimeSpan validFor)
+    public async Task<Uri> GetReadSasUriAsync(string blobName, TimeSpan validFor, CancellationToken ct = default)
     {
         var blob = GetContainer().GetBlobClient(blobName);
-
-        if (!blob.CanGenerateSasUri)
-        {
-            // val terug op de kale url (kan gebeuren als de client geen shared key heeft)
-            return blob.Uri;
-        }
+        var startsOn = DateTimeOffset.UtcNow.AddMinutes(-5); // marge voor kloktijd-verschillen
+        var expiresOn = DateTimeOffset.UtcNow.Add(validFor);
 
         var sasBuilder = new BlobSasBuilder
         {
             BlobContainerName = ContainerName,
             BlobName = blobName,
             Resource = "b",
-            ExpiresOn = DateTimeOffset.UtcNow.Add(validFor)
+            StartsOn = startsOn,
+            ExpiresOn = expiresOn
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-        return blob.GenerateSasUri(sasBuilder);
+        if (blob.CanGenerateSasUri)
+        {
+            // lokaal (Azurite): de client heeft een shared key, dus kan zelf rechtstreeks ondertekenen
+            return blob.GenerateSasUri(sasBuilder);
+        }
+
+        // cloud: de client authenticeert via Managed Identity (geen shared key), dus
+        // vragen we een tijdelijke "user delegation key" op bij Azure AD om de SAS mee te ondertekenen
+        var userDelegationKey = await client.GetUserDelegationKeyAsync(startsOn, expiresOn, ct);
+        var sasQueryParams = sasBuilder.ToSasQueryParameters(userDelegationKey.Value, client.AccountName);
+
+        var uriBuilder = new BlobUriBuilder(blob.Uri) { Sas = sasQueryParams };
+        return uriBuilder.ToUri();
     }
 }

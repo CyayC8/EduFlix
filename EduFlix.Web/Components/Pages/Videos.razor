@@ -24,9 +24,9 @@ else
             <MudItem xs="12" sm="6" md="4">
                 <MudCard>
                     <div style="position:relative">
-                        @if (video.ThumbnailBlobName is not null)
+                        @if (_thumbnailUrls.TryGetValue(video.Id, out var thumbnailUrl))
                         {
-                            <MudCardMedia Image="@BlobStorage.GetReadSasUri(video.ThumbnailBlobName, TimeSpan.FromHours(2)).ToString()" Height="160" />
+                            <MudCardMedia Image="@thumbnailUrl" Height="160" />
                         }
                         else
                         {
@@ -79,12 +79,20 @@ else
 @code {
     private IReadOnlyList<Video> _videos = [];
     private IReadOnlyDictionary<Guid, int> _viewCounts = new Dictionary<Guid, int>();
+    private readonly Dictionary<Guid, string> _thumbnailUrls = [];
 
     protected override async Task OnInitializedAsync()
     {
         _videos = await VideoService.GetAllAsync();
-        if (_videos.Count > 0)
-            _viewCounts = await AnalyticsService.GetViewCountsAsync(_videos.Select(v => v.Id));
+        if (_videos.Count == 0) return;
+
+        _viewCounts = await AnalyticsService.GetViewCountsAsync(_videos.Select(v => v.Id));
+
+        foreach (var video in _videos.Where(v => v.ThumbnailBlobName is not null))
+        {
+            var uri = await BlobStorage.GetReadSasUriAsync(video.ThumbnailBlobName!, TimeSpan.FromHours(2));
+            _thumbnailUrls[video.Id] = uri.ToString();
+        }
     }
 
     private static string FormatDuration(int seconds) => TimeSpan.FromSeconds(seconds).ToString(@"mm\:ss");

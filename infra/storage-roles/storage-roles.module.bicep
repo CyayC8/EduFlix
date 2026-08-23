@@ -40,3 +40,16 @@ resource storage_StorageQueueDataContributor 'Microsoft.Authorization/roleAssign
   }
   scope: storage
 }
+
+// nodig om zelf SAS-urls te kunnen ondertekenen via een user delegation key (geen shared key
+// beschikbaar met Managed Identity) — handmatig toegevoegd, Aspire's WithRoleAssignments vereist
+// een volledige AddAzureContainerAppEnvironment-opzet die we (nog) niet gebruiken
+resource storage_StorageBlobDelegator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storage.id, principalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'db58b8e5-c6ad-4a2a-8342-4190687cbf4a'))
+  properties: {
+    principalId: principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'db58b8e5-c6ad-4a2a-8342-4190687cbf4a')
+    principalType: principalType
+  }
+  scope: storage
+}

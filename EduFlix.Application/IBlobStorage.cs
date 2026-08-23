@@ -9,5 +9,5 @@ public interface IBlobStorage
     Task DeleteAsync(string blobName, CancellationToken ct = default);
 
     // Tijdelijke, ondertekende url zodat de browser rechtstreeks vanaf storage kan streamen.
-    Uri GetReadSasUri(string blobName, TimeSpan validFor);
+    Task<Uri> GetReadSasUriAsync(string blobName, TimeSpan validFor, CancellationToken ct = default);
 }

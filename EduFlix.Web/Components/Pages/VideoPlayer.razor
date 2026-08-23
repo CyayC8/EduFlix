@@ -52,7 +52,7 @@ else
         _video = await VideoService.GetByIdAsync(Id);
         if (_video is null) return;
 
-        _videoUrl = BlobStorage.GetReadSasUri(_video.BlobName, TimeSpan.FromHours(2)).ToString();
+        _videoUrl = (await BlobStorage.GetReadSasUriAsync(_video.BlobName, TimeSpan.FromHours(2))).ToString();
 
         var userId = await GetUserIdAsync();
         if (userId is not null)
